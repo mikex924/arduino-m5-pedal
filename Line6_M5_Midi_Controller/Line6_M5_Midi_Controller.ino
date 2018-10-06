@@ -1,15 +1,18 @@
+#include <EEPROM.h>
 #include <MIDI.h>
 #include <JC_Button.h>
 
 MIDI_CREATE_DEFAULT_INSTANCE();
-
 Button buttonUp(2, 25, false, false);
 Button buttonDown(3, 25, false, false);
 Button buttonExp(4, 25, false, false);
 
+const int presetMemAddr = 0;
+
+const int maxExp = 127;
 const int maxPreset = 23;
 
-int preset;
+int preset = 0;
 
 void setup()
 {
@@ -18,12 +21,15 @@ void setup()
   buttonDown.begin();
   buttonExp.begin();
 
-  // TODO: save to memory
-  preset = 0;
-  changeToPreset();
+  int savedPreset = EEPROM.read(presetMemAddr);
+  if (0 <= savedPreset && savedPreset <= maxPreset) {
+    preset = savedPreset;
+  }
 
-  // FOR TESTING
-  // Serial.begin(9600);
+  // wait for M5 to power up
+  delay(2000);
+
+  changeToPreset();
 }
 
 void loop()
@@ -59,16 +65,15 @@ void down()
 
 void changeToPreset() {
   MIDI.sendProgramChange(preset, 1);
+  EEPROM.write(presetMemAddr, preset);
 }
 
 void expMin()
 {
-  // Serial.println("exp min");
   MIDI.sendControlChange(1, 0, 1);
 }
 
 void expMax()
 {
-  // Serial.println("exp max");
-  MIDI.sendControlChange(1, 127, 1);
+  MIDI.sendControlChange(1, maxExp, 1);
 }
